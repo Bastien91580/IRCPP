@@ -12,8 +12,9 @@ using namespace std;
 
 int main()
 {
+    int nombreUser = 2;
     int connexionClient, connexionServer;
-    int client[2], server[2], i, j;
+    int client[nombreUser], server[nombreUser], i, j, k;
     int portNum = 1500;
     int nextPort = 1600;
     bool isExit = false;
@@ -49,13 +50,13 @@ int main()
     size = sizeof(server_addr_connexion);
     cout << "### Attente connexion User ..." << endl;
 
-    for(j = 0; j < 2; j ++){
+    for(j = 0; j < nombreUser; j ++){
 
         listen(connexionClient, 1);
 
         connexionServer = accept(connexionClient,(struct sockaddr *)&server_addr_connexion,&size);
         if (connexionServer < 0) 
-            cout << "=> Erreur validation connexion ..." << endl;
+            cout << "### Erreur validation connexion ..." << endl;
 
         buffer[0]='\0';
         sprintf(buffer,"%d", nextPort);
@@ -71,17 +72,17 @@ int main()
 
         if ((bind(client[j], (struct sockaddr*)&server_addr[j],sizeof(server_addr[j]))) < 0) 
         {
-            cout << "=> Erreur binding connexion, La connexion est deja etabli sur ce port (" << nextPort << ") ..." << endl;
+            cout << "### Erreur binding connexion, La connexion est deja etabli sur ce port (" << nextPort << ") ..." << endl;
             return -1;
         }
         nextPort++;
         size = sizeof(server_addr[j]);
-        cout << "=> Looking for clients..." << endl;
+        cout << "### Attente connexion User ..." << endl;
         listen(client[j], 1);
 
         server[j] = accept(client[j],(struct sockaddr *)&server_addr[j],&size);
         if (server[j] < 0) 
-            cout << "=> Error on accepting..." << endl;
+            cout << "### Erreur validation connexion ..." << endl;
         else
             cout << "User #" << j << " connecté" << endl;
 
@@ -91,7 +92,7 @@ int main()
 
     while (server[0] > 0) 
     {
-        for(j = 0; j < 2; j ++){
+        for(j = 0; j < nombreUser; j ++){
             do {
                 recv(server[j], buffer, bufsize, 0);
                 message[0] = '\0';
@@ -110,7 +111,11 @@ int main()
                 }
             } while (*buffer == '\n');
             cout << message << endl;
-            //send vers tout les autres
+            for(k = 0; k < nombreUser; k++){
+                if(k != j){
+                    send(server[k], message, bufsize, 0);
+                }
+            }
         }
 
     }

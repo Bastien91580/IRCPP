@@ -68,6 +68,8 @@ int main()
 
     do {
         cout << ">: ";
+
+
         ///////////////////////////////////// MESSAGE
         fgets(message,255,stdin);
         for(i = 0; i < 255; i++)
@@ -84,8 +86,9 @@ int main()
 
         if(strcmp(message,"/exit") == 0)
             break;
-            //recv(client, buffer, bufsize, 0);
-
+        
+        recv(client, buffer, bufsize, 0);
+        cout << buffer; << endl;
 
     } while (true);
 
