@@ -13,7 +13,7 @@ using namespace std;
 int main()
 {
     int connexionClient, connexionServer;
-    int client[2], server[2], i;
+    int client[2], server[2], i, j;
     int portNum = 1500;
     int nextPort = 1600;
     bool isExit = false;
@@ -22,7 +22,7 @@ int main()
     char message[277]; //Pseudo 21 + Message 256
     int clientCount = 1;
 
-    struct sockaddr_in server_addr_connexion, server_addr0;
+    struct sockaddr_in server_addr_connexion, server_addr[2];
 
 
     socklen_t size;
@@ -43,68 +43,79 @@ int main()
 
     if ((bind(connexionClient, (struct sockaddr*)&server_addr_connexion,sizeof(server_addr_connexion))) < 0) 
     {
-        cout << "=> Error binding connection, the socket has already been established..." << endl;
+        cout << "### Erreur binding connexion, La connexion est deja etabli sur ce port (" << portNum << ") ..." << endl;
         return -1;
     }
     size = sizeof(server_addr_connexion);
-    cout << "=> Looking for clients..." << endl;
-    listen(connexionClient, 1);
+    cout << "### Attente connexion User ..." << endl;
 
-    connexionServer = accept(connexionClient,(struct sockaddr *)&server_addr_connexion,&size);
-    if (connexionServer < 0) 
-        cout << "=> Error on accepting..." << endl;
+    for(j = 0; j < 2; j ++){
 
-    buffer[0]='\0';
-    sprintf(buffer,"%d", nextPort);
-    send(connexionServer, buffer, bufsize, 0);
+        listen(connexionClient, 1);
+
+        connexionServer = accept(connexionClient,(struct sockaddr *)&server_addr_connexion,&size);
+        if (connexionServer < 0) 
+            cout << "=> Erreur validation connexion ..." << endl;
+
+        buffer[0]='\0';
+        sprintf(buffer,"%d", nextPort);
+        send(connexionServer, buffer, bufsize, 0);
+
+        
+
+        client[j] = socket(AF_INET, SOCK_STREAM, 0);
+
+        server_addr[j].sin_family = AF_INET;
+        server_addr[j].sin_addr.s_addr = htons(INADDR_ANY);
+        server_addr[j].sin_port = htons(nextPort);
+
+        if ((bind(client[j], (struct sockaddr*)&server_addr[j],sizeof(server_addr[j]))) < 0) 
+        {
+            cout << "=> Erreur binding connexion, La connexion est deja etabli sur ce port (" << nextPort << ") ..." << endl;
+            return -1;
+        }
+        nextPort++;
+        size = sizeof(server_addr[j]);
+        cout << "=> Looking for clients..." << endl;
+        listen(client[j], 1);
+
+        server[j] = accept(client[j],(struct sockaddr *)&server_addr[j],&size);
+        if (server[j] < 0) 
+            cout << "=> Error on accepting..." << endl;
+        else
+            cout << "User #" << j << " connecté" << endl;
 
 
-
-
-
-    client[0] = socket(AF_INET, SOCK_STREAM, 0);
-
-    server_addr0.sin_family = AF_INET;
-    server_addr0.sin_addr.s_addr = htons(INADDR_ANY);
-    server_addr0.sin_port = htons(nextPort);
-
-    if ((bind(client[0], (struct sockaddr*)&server_addr0,sizeof(server_addr0))) < 0) 
-    {
-        cout << "=> Error binding connection, the socket has already been established..." << endl;
-        return -1;
     }
-    size = sizeof(server_addr0);
-    cout << "=> Looking for clients..." << endl;
-    listen(client[0], 1);
 
-    server[0] = accept(client[0],(struct sockaddr *)&server_addr0,&size);
-    if (server[0] < 0) 
-        cout << "=> Error on accepting..." << endl;
 
     while (server[0] > 0) 
     {
-        do {
-            recv(server[0], buffer, bufsize, 0);
-            message[0] = '\0';
-            strcat(message, buffer);
-            for(i = 0; i < 255; i++){
-                if(message[i] == '\n'){
-                    message[i] = '\0';
-                    break;
-                }
+        for(j = 0; j < 2; j ++){
+            do {
+                recv(server[j], buffer, bufsize, 0);
+                message[0] = '\0';
+                strcat(message, buffer);
+                for(i = 0; i < 255; i++){
+                    if(message[i] == '\n'){
+                        message[i] = '\0';
+                        break;
+                    }
 
-            }
-            
-            if(strcmp(message,"/exit") == 0){
-                cout << "\n\n=> Connection terminated with IP " << inet_ntoa(server_addr0.sin_addr);
-                close(server[0]);
-            }
-        } while (*buffer == '\n');
-        cout << message << endl;
+                }
+                
+                if(strcmp(message,"/exit") == 0){
+                    cout << "\n\n=> Connection terminated with IP " << inet_ntoa(server_addr[j].sin_addr);
+                    close(server[j]);
+                }
+            } while (*buffer == '\n');
+            cout << message << endl;
+            //send vers tout les autres
+        }
 
     }
 
     
-    close(connexionClient);
+    
     return 0;
 }
