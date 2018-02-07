@@ -10,11 +10,13 @@
 
 using namespace std;
 
-int main()
+int main(int argc, char ** argv)
 {
-    int nombreUser = 2;
+    int nombreUser = atoi(argv[1]);
     int connexionClient, connexionServer;
-    int client[nombreUser], server[nombreUser], i, j, k;
+    int client[nombreUser], server[nombreUser];
+    int connected = nombreUser;
+    int i, j, k;
     int portNum = 1500;
     int nextPort = 1600;
     bool isExit = false;
@@ -24,10 +26,9 @@ int main()
     int clientCount = 1;
 
     struct sockaddr_in server_addr_connexion, server_addr[2];
-
-
     socklen_t size;
 
+    // Socket de Connexion
     connexionClient = socket(AF_INET, SOCK_STREAM, 0);
 
     if (connexionClient < 0) 
@@ -50,6 +51,7 @@ int main()
     size = sizeof(server_addr_connexion);
     cout << "### Attente connexion User ..." << endl;
 
+    // Socket de discution
     for(j = 0; j < nombreUser; j ++){
 
         listen(connexionClient, 1);
@@ -85,16 +87,26 @@ int main()
             cout << "### Erreur validation connexion ..." << endl;
         else
             cout << "User #" << j << " connecté" << endl;
-
-
     }
 
+    if(j == nombreUser){
+        buffer[0] = 'O';
+        buffer[0] = 'K';
+        buffer[0] = '\0';
+        for(i = 0; i < nombreUser; i++)
+            send(server[i], buffer, bufsize, 0);
+        cout << "Tout les Utilisateur sont connectés !" << endl;
+    }
 
-    while (server[0] > 0) 
+    int res;
+
+    while (nombreUser > 0) 
     {
         for(j = 0; j < nombreUser; j ++){
+
+            // Reception du message
             do {
-                recv(server[j], buffer, bufsize, 0);
+                res = recv(server[j], buffer, bufsize, MSG_DONTWAIT);
                 message[0] = '\0';
                 strcat(message, buffer);
                 for(i = 0; i < 255; i++){
@@ -102,22 +114,24 @@ int main()
                         message[i] = '\0';
                         break;
                     }
-
                 }
                 
+                // Commande pour mettre fin a la connexion
                 if(strcmp(message,"/exit") == 0){
                     cout << "\n\n=> Connection terminated with IP " << inet_ntoa(server_addr[j].sin_addr);
+                    nombreUser --;
                     close(server[j]);
                 }
             } while (*buffer == '\n');
-            cout << message << endl;
-            for(k = 0; k < nombreUser; k++){
-                if(k != j){
-                    send(server[k], message, bufsize, 0);
-                }
+            
+            // Revois du message aux autres utilisateurs
+            if(res > 0){
+                cout << message << endl;
+                for(k = 0; k < nombreUser; k++)
+                    if(k != j && server[k] > 0)
+                            send(server[k], message, bufsize, 0);
             }
         }
-
     }
 
     

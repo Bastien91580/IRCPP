@@ -47,9 +47,8 @@ int main()
         cout << "### Connexion Au Serveur Port : " << connexionPort << endl;
 
 
-    cout << "### En Attente De Confirmation Du Serveur ..." << endl;
+    cout << "### Recepetion Du Port Pour De Discution ..." << endl;
     recv(client, buffer, bufsize, 0);
-    cout << "### Connexion Confirmée." << endl;
 
     close(client);
 
@@ -62,13 +61,25 @@ int main()
         cout << "### Connexion Au Serveur Port : " << portNum << endl;
 
 
-    cout << "### En Attente De Confirmation Du Serveur ..." << endl;
+    cout << "### En Attente De Connexion Des Autres Utilisateurs ..." << endl;
+    recv(client, buffer, bufsize, 0);
+    if(strcmp(buffer, "OK")){
+        cout << "### Tout Les Utilisateurs Sont Connecté ..." << endl;
+    }
+    
     cout << "\n\n=> Pour Quitter Saisir /exit.\n" << endl;
 
-
+    int res;
     do {
+        
+
+        do {
+            res = recv(client, buffer, bufsize, MSG_DONTWAIT);
+            if(res > 0) cout << buffer << endl;
+        } while(res > 0);
         cout << ">: ";
 
+        
 
         ///////////////////////////////////// MESSAGE
         fgets(message,255,stdin);
@@ -87,8 +98,7 @@ int main()
         if(strcmp(message,"/exit") == 0)
             break;
         
-        recv(client, buffer, bufsize, 0);
-        cout << buffer; << endl;
+        
 
     } while (true);
 
