@@ -26,20 +26,19 @@ int main(int argc, char ** argv)
     int clientCount = 1;
     char name[nombreUser][21];
     char verifName[21];
+    int res;
 
     struct sockaddr_in server_addr_connexion, server_addr[2];
     socklen_t size;
 
-    // Socket de Connexion
+    // Socket De Donnexion
     connexionClient = socket(AF_INET, SOCK_STREAM, 0);
-
     if (connexionClient < 0) 
     {
         cout << "\nErreur Création Socket ..." << endl;
         exit(1);
     }
-
-    cout << "\n### Socket Client Créé ..." << endl;
+    cout << "\n### Socket Client Connexion Créé ..." << endl;
 
     server_addr_connexion.sin_family = AF_INET;
     server_addr_connexion.sin_addr.s_addr = htons(INADDR_ANY);
@@ -53,9 +52,10 @@ int main(int argc, char ** argv)
     size = sizeof(server_addr_connexion);
     cout << "### Attente connexion User ..." << endl;
 
-    // Socket de discution
+    // Sockets De Discution
     for(j = 0; j < nombreUser; j ++){
 
+        // Reception Sur Port De Connexion Pour Envoyer Le Port De Discution
         listen(connexionClient, 1);
 
         connexionServer = accept(connexionClient,(struct sockaddr *)&server_addr_connexion,&size);
@@ -66,7 +66,7 @@ int main(int argc, char ** argv)
         sprintf(buffer,"%d", nextPort);
         send(connexionServer, buffer, bufsize, 0);
         
-
+        // Creation Des Sockets De Discution
         client[j] = socket(AF_INET, SOCK_STREAM, 0);
 
         server_addr[j].sin_family = AF_INET;
@@ -86,8 +86,7 @@ int main(int argc, char ** argv)
         server[j] = accept(client[j],(struct sockaddr *)&server_addr[j],&size);
         if (server[j] < 0) 
             cout << "### Erreur validation connexion ..." << endl;
-        else
-            cout << "User #" << j << " connecté" << endl;
+            
 
         // Verification du Pseudo
         int nameExist = 0;
@@ -105,15 +104,16 @@ int main(int argc, char ** argv)
             }
         }while(nameExist > 0);
 
+        // Envoie Reponse Ok Pseudo
         buffer[0] = 'O';
         buffer[0] = 'K';
         buffer[0] = '\0';
         send(server[j], buffer, bufsize, 0);
-        
+        cout << "### User #" << j << " connecté : " << verifName << endl;
         strcpy(name[j], verifName);
     }
 
-    // Conversation prête
+    // Conversation Prête, Evoie Message Aux Clients
     if(j == nombreUser){
         buffer[0] = 'O';
         buffer[0] = 'K';
@@ -123,8 +123,8 @@ int main(int argc, char ** argv)
         cout << "Tout les Utilisateur sont connectés !" << endl;
     }
 
-    int res;
-
+    
+    // Cycle Reception/Renvoie De Message
     while (nombreUser > 0) 
     {
         for(j = 0; j < nombreUser; j ++){
