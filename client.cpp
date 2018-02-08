@@ -24,14 +24,6 @@ int main()
 
     struct sockaddr_in server_addr;
 
-    ///////////////////////////////////// USER NAME
-    cout << "Saisir Votre Pseudo : ";
-    fgets(nameUser,20,stdin);
-    for(i = 0; i < 21; i++)
-        if(nameUser[i] == '\n')
-            nameUser[i] = '\0';
-    cout << "Pseudo : " << nameUser;
-
 
     client = socket(AF_INET, SOCK_STREAM, 0);
     if (client < 0) {
@@ -60,16 +52,38 @@ int main()
     if (connect(client,(struct sockaddr *)&server_addr, sizeof(server_addr)) == 0)
         cout << "### Connexion Au Serveur Port : " << portNum << endl;
 
+    int verif = 0;
+    do {
+        ///////////////////////////////////// USER NAME
+        cout << "Saisir Votre Pseudo : ";
+        fgets(nameUser,20,stdin);
+        for(i = 0; i < 21; i++)
+            if(nameUser[i] == '\n')
+                nameUser[i] = '\0';
+
+        send(client, nameUser, 21, 0);
+        cout << "Pseudo : " << nameUser << endl;
+
+        recv(client, buffer, bufsize, 0);
+        if(strcmp(buffer,"KO") == 0){
+            cout << "Pseudo Deja Utilisé" << endl;
+        } else
+            verif ++;
+    }while(verif == 0);
+
+    
+
 
     cout << "### En Attente De Connexion Des Autres Utilisateurs ..." << endl;
     recv(client, buffer, bufsize, 0);
     if(strcmp(buffer, "OK")){
         cout << "### Tout Les Utilisateurs Sont Connecté ..." << endl;
     }
-    
+
     cout << "\n\n=> Pour Quitter Saisir /exit.\n" << endl;
 
     int res;
+    char inputString[100];
     do {
         
 
@@ -77,9 +91,13 @@ int main()
             res = recv(client, buffer, bufsize, MSG_DONTWAIT);
             if(res > 0) cout << buffer << endl;
         } while(res > 0);
+        
         cout << ">: ";
 
-        
+
+/*
+        recv(0, inputString, 100, 0);    
+        cout << inputString << endl;*/
 
         ///////////////////////////////////// MESSAGE
         fgets(message,255,stdin);
@@ -97,7 +115,6 @@ int main()
 
         if(strcmp(message,"/exit") == 0)
             break;
-        
         
 
     } while (true);

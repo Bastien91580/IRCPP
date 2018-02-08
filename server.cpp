@@ -24,6 +24,8 @@ int main(int argc, char ** argv)
     char buffer[bufsize];
     char message[277]; //Pseudo 21 + Message 256
     int clientCount = 1;
+    char name[nombreUser][21];
+    char verifName[21];
 
     struct sockaddr_in server_addr_connexion, server_addr[2];
     socklen_t size;
@@ -63,7 +65,6 @@ int main(int argc, char ** argv)
         buffer[0]='\0';
         sprintf(buffer,"%d", nextPort);
         send(connexionServer, buffer, bufsize, 0);
-
         
 
         client[j] = socket(AF_INET, SOCK_STREAM, 0);
@@ -87,8 +88,32 @@ int main(int argc, char ** argv)
             cout << "### Erreur validation connexion ..." << endl;
         else
             cout << "User #" << j << " connecté" << endl;
+
+        // Verification du Pseudo
+        int nameExist = 0;
+        do{
+            nameExist = 0;
+            recv(server[j], verifName, 21, 0);
+            for(i = 0; i < j; i++){
+                if(strcmp(verifName, name[i]) == 0){
+                    buffer[0] = 'K';
+                    buffer[1] = 'O';
+                    buffer[2] = '\0';
+                    send(server[j], buffer, bufsize, 0);
+                    nameExist++;
+                }
+            }
+        }while(nameExist > 0);
+
+        buffer[0] = 'O';
+        buffer[0] = 'K';
+        buffer[0] = '\0';
+        send(server[j], buffer, bufsize, 0);
+        
+        strcpy(name[j], verifName);
     }
 
+    // Conversation prête
     if(j == nombreUser){
         buffer[0] = 'O';
         buffer[0] = 'K';
