@@ -129,7 +129,7 @@ int main(int argc, char ** argv)
         buffer[0] = '\0';
         for(i = 0; i < nombreUser; i++)
             send(server[i], buffer, bufsize, 0);
-        cout << "Tout les Utilisateur sont connectés !" << endl;
+        cout << "### Tout les Utilisateur sont connectés !" << endl;
     }
 
     
@@ -159,7 +159,7 @@ int main(int argc, char ** argv)
                     
                     // Commande pour mettre fin a la connexion
                     if(strcmp(message,verfiCommande) == 0){
-                        cout << "\n\n=> Connection terminated with IP " << inet_ntoa(server_addr[j].sin_addr);
+                        cout << "### Connection Terminer Avec " << name[j] << endl;
                         cycle --;
                         name[j][0]='\0';
                         close(server[j]);
