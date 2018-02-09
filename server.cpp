@@ -12,6 +12,11 @@ using namespace std;
 
 int main(int argc, char ** argv)
 {
+    if(argc < 2 || atoi(argv[1]) < 1){
+        cout << "\nErreur Nombre D'Utilisateurs inferieur a  Socket ..." << endl;
+        exit(1);
+    }
+
     int nombreUser = atoi(argv[1]);
     int connexionClient, connexionServer;
     int client[nombreUser], server[nombreUser];
@@ -27,11 +32,15 @@ int main(int argc, char ** argv)
     char name[nombreUser][21];
     char verifName[21];
     int res;
+    int nameExist = 0;
+    int cycle = nombreUser;
+    char verfiCommande[277];
 
     struct sockaddr_in server_addr_connexion, server_addr[2];
     socklen_t size;
 
-    // Socket De Donnexion
+
+    // Socket De Connexion
     connexionClient = socket(AF_INET, SOCK_STREAM, 0);
     if (connexionClient < 0) 
     {
@@ -89,7 +98,7 @@ int main(int argc, char ** argv)
             
 
         // Verification du Pseudo
-        int nameExist = 0;
+        
         do{
             nameExist = 0;
             recv(server[j], verifName, 21, 0);
@@ -125,38 +134,48 @@ int main(int argc, char ** argv)
 
     
     // Cycle Reception/Renvoie De Message
-    while (nombreUser > 0) 
+    while (cycle > 0) 
     {
         for(j = 0; j < nombreUser; j ++){
 
-            // Reception du message
-            do {
-                res = recv(server[j], buffer, bufsize, MSG_DONTWAIT);
-                message[0] = '\0';
-                strcat(message, buffer);
-                for(i = 0; i < 255; i++){
-                    if(message[i] == '\n'){
-                        message[i] = '\0';
-                        break;
+            if(server[j] > 0){
+                // Reception du message
+                do {
+                    res = recv(server[j], buffer, bufsize, MSG_DONTWAIT);
+                    message[0] = '\0';
+                    strcat(message, buffer);
+                    for(i = 0; i < 255; i++){
+                        if(message[i] == '\n'){
+                            message[i] = '\0';
+                            break;
+                        }
                     }
-                }
+
+                    
+                    // Construction De La String De Verif Commande
+                    verfiCommande[0] = '\0';
+                    strcat(verfiCommande,name[j]);
+                    strcat(verfiCommande," : /exit");
+                    
+                    // Commande pour mettre fin a la connexion
+                    if(strcmp(message,verfiCommande) == 0){
+                        cout << "\n\n=> Connection terminated with IP " << inet_ntoa(server_addr[j].sin_addr);
+                        cycle --;
+                        name[j][0]='\0';
+                        close(server[j]);
+                    }
+                } while (*buffer == '\n');
                 
-                // Commande pour mettre fin a la connexion
-                if(strcmp(message,"/exit") == 0){
-                    cout << "\n\n=> Connection terminated with IP " << inet_ntoa(server_addr[j].sin_addr);
-                    nombreUser --;
-                    close(server[j]);
+                // Revois du message aux autres utilisateurs
+                if(res > 0){
+                    cout << message << endl;
+                    for(k = 0; k < nombreUser; k++)
+                        if(k != j && server[k] > 0)
+                                send(server[k], message, bufsize, 0);
                 }
-            } while (*buffer == '\n');
-            
-            // Revois du message aux autres utilisateurs
-            if(res > 0){
-                cout << message << endl;
-                for(k = 0; k < nombreUser; k++)
-                    if(k != j && server[k] > 0)
-                            send(server[k], message, bufsize, 0);
             }
         }
+        
     }
 
     
